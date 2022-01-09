@@ -9,8 +9,8 @@ from one_night_werewolf.room import room_info
 
 room_dict = {}
 
-def create_room(player, roles):
-    room = room_info.GameRoom(str(uuid.uuid5(uuid.NAMESPACE_DNS, player.open_id)), roles)
+def create_room(player, roles_config):
+    room = room_info.GameRoom(str(uuid.uuid5(uuid.NAMESPACE_DNS, player.open_id)), roles_config)
     room_dict[room.roomid] = room
     return room
 

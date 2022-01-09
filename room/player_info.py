@@ -20,11 +20,17 @@ class Player(object):
         self._roles = []
         self._death = False
         self.room = None
+        self.vote_msg = None
+        self.vote_num = 0
+        self.is_win = None
     def to_dict(self):
-        return {'open_id':self.open_id,'name':self.name,'_roles':[o.to_dict() for o in self._roles]}
+        return {'open_id':self.open_id,'name':self.name,'vote_num':self.vote_num,
+                'is_win':self.is_win,'_death':self._death,
+                'vote_msg':None if self.vote_msg is None else self.vote_msg.to_dict(),
+                '_roles':[o.to_dict() for o in self._roles]}
 
     def send_self(self):
-        self.send_msg(msg.S_msg(0, '', 'player_info', self.to_dict()))
+        self.send_msg(msg.S_msg(0, self._roles[0]._role_name, 'player_info', self.to_dict()))
 
     def send_msg(self, smsg):
         def send(smsg):
@@ -43,7 +49,7 @@ class Player(object):
 
     def create_room(self, rmsg):
         from one_night_werewolf.room import room_center
-        room = room_center.create_room(self, rmsg.op_content['roles'])
+        room = room_center.create_room(self, rmsg.op_content['roles_config'])
         self.room = room
         logging.info('创建房间成功')
         return msg.S_msg(0, '创建房间成功', 'info', {'room_id':self.room.roomid})
@@ -63,19 +69,21 @@ class Player(object):
         return self.room.start_game()
 
     def operate_msg(self, rmsg):
-        self._roles[0].operate_msg(rmsg)
+        self._roles[0].operate_msg(self,rmsg)
         self.room.cal_game()
 
-    def debug(self, rmsg):
-        lr_msg = [o.to_dict() for o in self.room.left_role]
-        logging.info('left_role:'+ json.dumps(lr_msg))
-        for player in self.room.players_order_list:
-            player.send_self()
+    def vote(self, rmsg):
+        self.vote_msg = rmsg
+        self.room.end_game()
+
+    def game_result(self, rmsg):
+        self.room.game_result()
             
 
 if __name__ == '__main__':
     player1 = Player('111', '111', None)
     player2 = Player('222', '222', None)
+    ss = set([player2])
     ll = [player1, player2]
     res = [p.to_dict() for p in ll]
     print(f'res:{res}')
