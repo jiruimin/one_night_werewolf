@@ -3,6 +3,11 @@ import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
+import time
+from apscheduler.schedulers.blocking import BlockingScheduler
+import requests
+import _thread
+
 from one_night_werewolf.room import player_info
 from one_night_werewolf.room import msg
 import logging
@@ -10,10 +15,12 @@ logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(name)s %(levelname)s %(message)s",
                     datefmt = '%Y-%m-%d  %H:%M:%S'    #注意月份和天数不要搞乱了，这里的格式化符与time模块相同
                     )
+
+sched = BlockingScheduler()
+# access_token = ''
+
 player_dict = {}
-
 pity = FastAPI()
-
 html = """
 <!DOCTYPE html>
 <html>
@@ -50,6 +57,16 @@ html = """
     </body>
 </html>
 """
+# AppID(小程序ID)  wxf5015f38fc530f6e
+# AppSecret(小程序密钥)  998bac19333056b393f3731901054c5b
+@sched.scheduled_job('interval', minutes=90)
+def fetch_token():
+    url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wxf5015f38fc530f6e&secret=998bac19333056b393f3731901054c5b'
+    res = requests.get(url=url).text
+    root = json.loads(res)
+    global access_token
+    access_token = root['access_token']
+    logging.info(f"获取微信token:{access_token}")
 
 async def check_permit(websocket):
     while True:
@@ -96,6 +113,10 @@ async def disconnect(websocket, path):
 async def get():
     return HTMLResponse(html)
 
+@pity.get("/one_niight_werewolf/access_token")
+async def get_access_token():
+    return {"code":0,"msg":"","data":access_token}
+
 
 @pity.websocket("/ws/{name}")
 async def websocket_endpoint(websocket: WebSocket, name: str):
@@ -112,4 +133,8 @@ async def websocket_endpoint(websocket: WebSocket, name: str):
         logging.error(e)
 
 if __name__ == "__main__":
+    def fetch():
+        fetch_token()
+        sched.start()
+    _thread.start_new_thread(fetch)
     uvicorn.run(app=pity, host="0.0.0.0", port=5010, log_level="info")
