@@ -136,5 +136,5 @@ if __name__ == "__main__":
     def fetch():
         fetch_token()
         sched.start()
-    _thread.start_new_thread(fetch)
+    _thread.start_new_thread(fetch, ())
     uvicorn.run(app=pity, host="0.0.0.0", port=5010, log_level="info")
