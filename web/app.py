@@ -113,7 +113,7 @@ async def disconnect(websocket, path):
 async def get():
     return HTMLResponse(html)
 
-@pity.get("/one_niight_werewolf/access_token")
+@pity.get("/one_night_werewolf/access_token")
 async def get_access_token():
     return {"code":0,"msg":"","data":access_token}
 
