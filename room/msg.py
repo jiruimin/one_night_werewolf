@@ -12,7 +12,7 @@ class R_msg(object):
     def __init__(self, recv_str):
         json_data = json.loads(recv_str)
         self.open_id = json_data['open_id']
-        self.name = json_data['name']
+        self.nickName = json_data['nickName']
         self.op_type = json_data['op_type']
         self.room_id = json_data['room_id']
         if 'op_content' in json_data:
@@ -21,7 +21,7 @@ class R_msg(object):
     def to_dict(self):
         return {
         'open_id':self.open_id,
-        'name':self.name,
+        'nickName':self.nickName,
         'op_type':self.op_type,
         'room_id':self.room_id,
         'op_content':self.op_content

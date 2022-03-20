@@ -74,7 +74,7 @@ async def check_permit(websocket):
         logging.info(f"player loading:{recv_str}")
         rmsg = msg.R_msg(recv_str)
         if rmsg.open_id is not None:
-            player = player_info.Player(rmsg.open_id,rmsg.name,websocket)
+            player = player_info.Player(rmsg.open_id,rmsg.nickName,websocket)
             player_dict[rmsg.open_id]=player
             return player
         else:

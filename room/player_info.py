@@ -13,9 +13,9 @@ class Player(object):
     # name : str
     # websocket : WebSocket
     
-    def __init__(self, open_id, name, websocket):
+    def __init__(self, open_id, nickName, websocket):
         self.open_id = open_id
-        self.name = name
+        self.nickName = nickName
         self.websocket = websocket
         self._roles = []
         self._death = False
@@ -24,7 +24,7 @@ class Player(object):
         self.vote_num = 0
         self.is_win = None
     def to_dict(self):
-        return {'open_id':self.open_id,'name':self.name,'vote_num':self.vote_num,
+        return {'open_id':self.open_id,'nickName':self.nickName,'vote_num':self.vote_num,
                 'is_win':self.is_win,'_death':self._death,
                 'vote_msg':None if self.vote_msg is None else self.vote_msg.to_dict(),
                 '_roles':[o.to_dict() for o in self._roles]}
@@ -60,7 +60,7 @@ class Player(object):
         if roomid not in room_center.room_dict:
             logging.info('房间不存在')
             return msg.S_msg(-1, '房间不存在', 'info', self.room.roomid)
-        logging.info(f'{self.name}加入房间{roomid}成功')
+        logging.info(f'{self.nickName}加入房间{roomid}成功')
         self.room = room_center.room_dict[roomid]
         room_center.join_room(roomid, self)
         return msg.S_msg(0, '加入房间成功', 'info', self.room.roomid)

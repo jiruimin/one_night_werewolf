@@ -85,14 +85,14 @@ class GameRoom(object):
             players_order_list[i].vote_num = 0
             players_order_list[i].is_win = None
 
-        logging.info('player_role: ' + str([player.name+":"+player._roles[0]._role_name for player in self.players.values()]))
+        logging.info('player_role: ' + str([player.nickName+":"+player._roles[0]._role_name for player in self.players.values()]))
         logging.info('left_role: ' + str([x._role_name for x in self.left_role]))
 
 
         players_order_list.sort(key = lambda player : player._roles[0]._action_num)
         self.players_order_list = players_order_list
         for pen in players_order_list:
-            logging.info(pen.name+':operate_begin: ' + json.dumps(pen._roles[0].to_dict()))
+            logging.info(pen.nickName+':operate_begin: ' + json.dumps(pen._roles[0].to_dict()))
             pen._roles[0].operate_begin(pen)
         return None
 
@@ -100,7 +100,7 @@ class GameRoom(object):
         flag = True
         for player in self.players.values():
             if player._roles[0].status < 10:
-                logging.info(f'{player.name}[{player._roles[0].to_dict()}]未操作')
+                logging.info(f'{player.nickName}[{player._roles[0].to_dict()}]未操作')
                 flag = False
                 break
         if flag:
@@ -116,7 +116,7 @@ class GameRoom(object):
     def end_game(self):
         for player in self.players.values():
             if player.vote_msg is None:
-                logging.info(f'房间[{self.roomid}]等待玩家[{player.name}]投票完成......')
+                logging.info(f'房间[{self.roomid}]等待玩家[{player.nickName}]投票完成......')
                 return None
         logging.info(f'房间[{self.roomid}]所有玩家投票完成')
         d_player = set()
