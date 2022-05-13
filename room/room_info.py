@@ -10,6 +10,7 @@ import json
 import logging
 from one_night_werewolf.role import base_role
 from one_night_werewolf.room import msg
+from one_night_werewolf.room import player_info
 
 
 '捣蛋鬼Troublemaker'
@@ -44,14 +45,20 @@ class GameRoom(object):
     def to_dict(self):
         return {'roomid':self.roomid,'room_create_time':self._room_create_time,'game_start_time':self._game_start_time,
                 'game_end_time':self._game_end_time,'player_max':self.player_max,'roles_config':self.roles_config,
-                'players':[o.to_dict() for o in self.players_order_list],
+                'players':[o.to_dict() for o in self.players.values()],
                 'left_role':[o.to_dict() for o in self.left_role]}
 
 
-    def join_room(self, player):
-        self.players[player.open_id] = player
+    def join_room(self, player:player_info.Player):
+        self.players[player.openid] = player
+        for player in self.players.values():
+            player.send_msg(msg.S_msg(0, f'{player.nickName}加入了房间...', 'info', None))
+    def leave_room(self, player:player_info.Player):
+        player = self.players.pop(player.openid)
+        for player in self.players.values():
+            player.send_msg(msg.S_msg(0, f'{player.nickName}离开了房间...', 'info', None))
         
-    def start_game(self):
+    def start_game(self) -> msg.S_msg:
         self._game_start_time = time.time()
         self._game_end_time = None
         self.role_to_player = {}
@@ -66,14 +73,14 @@ class GameRoom(object):
         ## 随机分配角色
         roles_obj = []
         for role in self.roles_config:
-            role_class = getattr(base_role, role)
+            role_class = getattr(base_role, role.capitalize())
             role_obj = role_class()
             roles_obj.append(role_obj)
         logging.info('roles load success......')
         random.shuffle(roles_obj)
         self.left_role = roles_obj[len(players_order_list):]
         for i in range(len(players_order_list)):
-            # self.player_to_role[players_list[i].open_id] = roles_obj[i]
+            # self.player_to_role[players_list[i].openid] = roles_obj[i]
             players_order_list[i]._roles = [roles_obj[i]]
             rp = []
             if roles_obj[i]._role_name in self.role_to_player:
@@ -123,7 +130,7 @@ class GameRoom(object):
         d_vote_num = 0
         # vote_res = dict()
         for player in self.players.values():
-                openid = player.vote_msg.op_content['vote_msg']['open_id']
+                openid = player.vote_msg.op_content['vote_msg']['openid']
                 ##  记录投票结果
                 dest_p = self.players[openid]
                 dest_p.vote_num = dest_p.vote_num + 1
@@ -148,7 +155,6 @@ class GameRoom(object):
         else:
             self.game_result()
         return None
-
 
     def game_result(self):
         def get_last_role_name(player):
@@ -182,7 +188,6 @@ class GameRoom(object):
 
         for player in self.players_order_list:
             player.send_msg(msg.S_msg(0, 'game_over', 'game_info', self.to_dict()))
-    
         
 
 if __name__ == '__main__':

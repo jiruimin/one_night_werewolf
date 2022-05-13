@@ -8,8 +8,10 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 import requests
 import _thread
 
-from one_night_werewolf.room import player_info
 from one_night_werewolf.room import msg
+from one_night_werewolf.room import room_center
+from one_night_werewolf.room import player_info
+
 import logging
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(name)s %(levelname)s %(message)s",
@@ -17,46 +19,12 @@ logging.basicConfig(level=logging.INFO,
                     )
 
 sched = BlockingScheduler()
+from one_night_werewolf.util import sqlite
+sqliteUtil = sqlite.SqliteUtil()
 # access_token = ''
 
 player_dict = {}
 pity = FastAPI()
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <h2>Your ID: <span id="ws-id"></span></h2>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var client_id = Date.now()
-            document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send_text()input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
 # AppID(小程序ID)  wxf5015f38fc530f6e
 # AppSecret(小程序密钥)  998bac19333056b393f3731901054c5b
 @sched.scheduled_job('interval', minutes=90)
@@ -68,14 +36,16 @@ def fetch_token():
     access_token = root['access_token']
     logging.info(f"获取微信token:{access_token}")
 
-async def check_permit(websocket):
+async def check_permit(websocket) -> player_info.Player:
     while True:
         recv_str = await websocket.receive_text()
         logging.info(f"player loading:{recv_str}")
         rmsg = msg.R_msg(recv_str)
-        if rmsg.open_id is not None:
-            player = player_info.Player(rmsg.open_id,rmsg.nickName,websocket)
-            player_dict[rmsg.open_id]=player
+        if rmsg.openid is not None:
+            sqliteUtil.insert_user({'openid':rmsg.openid, 'nickName':rmsg.nickName, 'avatarUrl':rmsg.avatarUrl})
+            user_info = sqliteUtil.select_user(rmsg.openid)
+            player = player_info.Player(user_info['openid'],user_info['nickName'],user_info['avatarUrl'],websocket)
+            player_dict[rmsg.openid]=player
             return player
         else:
             return None
@@ -108,18 +78,26 @@ async def disconnect(websocket, path):
         await recv_msg(player)
 
 
-
-@pity.get("/")
-async def get():
-    return HTMLResponse(html)
+@pity.get("/one_night_werewolf/room_info/{roomid}")
+async def get(roomid:int):
+    room = room_center.get_room(roomid)
+    if(room):
+        return {"code":0,"msg":"","data":room.to_dict()}
+    return {"code":0,"msg":"","data":None}
 
 @pity.get("/one_night_werewolf/access_token")
 async def get_access_token():
     return {"code":0,"msg":"","data":access_token}
 
+@pity.get("/one_night_werewolf/user_info/{openid}")
+async def get_user_info(openid:str):
+    user_info = sqliteUtil.select_user(openid)
+    return {"code":0,"msg":"","data":user_info}
+    
 
-@pity.websocket("/ws/{name}")
-async def websocket_endpoint(websocket: WebSocket, name: str):
+
+@pity.websocket("/ws/{openid}")
+async def websocket_endpoint(websocket: WebSocket, openid: str):
     await websocket.accept()
     try:
         while True:
@@ -131,6 +109,8 @@ async def websocket_endpoint(websocket: WebSocket, name: str):
                 await recv_msg(player)
     except WebSocketDisconnect as e:
         logging.error(e)
+        if openid in player_dict:
+            player_dict[openid].leave_room()
 
 if __name__ == "__main__":
     def fetch():

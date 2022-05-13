@@ -49,7 +49,7 @@ class _baseRole(metaclass=abc.ABCMeta):
         
 
 # 猎人  -1
-class hunter(_baseRole):
+class Hunter(_baseRole):
     def __init__(self):
         super().__init__('hunter',-1)
 
@@ -57,8 +57,8 @@ class hunter(_baseRole):
         if self.status == 20:
             return
         room = player.room
-        open_id = self._game_message[0].op_content['operate_back']['open_id']
-        room.players[open_id]._death = True
+        openid = self._game_message[0].op_content['operate_back']['openid']
+        room.players[openid]._death = True
         self.status = 20
         room.game_result()
     
@@ -69,12 +69,12 @@ class hunter(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
     
 
 # 化身幽灵 0
-class doppelganger(_baseRole):
+class Doppelganger(_baseRole):
     def __init__(self):
         super().__init__('doppelganger',0)
         self.copy_role = None
@@ -94,7 +94,7 @@ class doppelganger(_baseRole):
         room = player.room
         if len(self._game_message) == 1:
             operate_back = self._game_message[0].op_content['operate_back']
-            role_name = room.players[operate_back['open_id']]._roles[-1]._role_name
+            role_name = room.players[operate_back['openid']]._roles[-1]._role_name
             obj = sys.modules[__name__]
             self.copy_role = getattr(obj, role_name)()
 
@@ -121,12 +121,12 @@ class doppelganger(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
 
 # 普通狼人 1
-class werewolf(_baseRole):
+class Werewolf(_baseRole):
     def __init__(self):
         super().__init__('werewolf',1)
 
@@ -142,20 +142,22 @@ class werewolf(_baseRole):
         data = [p.to_dict() for p in were_players]
         for wp in were_players:
             wp.send_msg(msg.S_msg(0,"werewolf", "operate_info", data))
-        self.status = 20
+        
 
     def operate_msg(self, player, rmsg):
         if self.status < 10:
-            self._game_message.append(rmsg)
             self.status = 10   
+            self._game_message.append(rmsg)
+            
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 10
+            player.send_self()
+            
 
 # 头狼 2
-class alphawolf(_baseRole):
+class Alphawolf(_baseRole):
     def __init__(self):
         super().__init__('alphawolf',2)
 
@@ -171,12 +173,12 @@ class alphawolf(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
 
 # 爪牙 3    
-class minion(_baseRole):
+class Minion(_baseRole):
     def __init__(self):
         super().__init__('minion',3)
 
@@ -202,12 +204,12 @@ class minion(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 10
+            player.send_self()
         
 
 # 守夜人  4
-class mason(_baseRole):
+class Mason(_baseRole):
     def __init__(self):
         super().__init__('mason',4)
 
@@ -228,12 +230,12 @@ class mason(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 10
+            player.send_self()
         
 
 # 预言家  5
-class seer(_baseRole):
+class Seer(_baseRole):
     def __init__(self):
         super().__init__('seer',5)
 
@@ -242,8 +244,13 @@ class seer(_baseRole):
             return
         room = player.room
         operate_back = self._game_message[0].op_content['operate_back']
-        role = room.players[operate_back['open_id']]._roles[-1]
-        player.send_msg(msg.S_msg(0,"seer", "operate_end", {operate_back['open_id']:role.to_dict()}))
+        if('openid' in operate_back):
+            pl = room.players[operate_back['openid']]
+            player.send_msg(msg.S_msg(0,"seer", "operate_end", {pl.nickName:pl._roles[-1].to_dict()}))
+        elif('card' in operate_back):
+            card = operate_back['card']
+            content = {"0":room.left_role[card[0]].to_dict(), "1":room.left_role[card[1]].to_dict()}
+            player.send_msg(msg.S_msg(0,"seer", "operate_end", content))
         self.status = 20
         
 
@@ -254,12 +261,12 @@ class seer(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
 
 # 强盗  6
-class robber(_baseRole):
+class Robber(_baseRole):
     def __init__(self):
         super().__init__('robber',6)
 
@@ -269,8 +276,8 @@ class robber(_baseRole):
         room = player.room
         operate_back = self._game_message[0].op_content['operate_back']
         
-        operate_player = room.players[operate_back['open_id']]
-        player.send_msg(msg.S_msg(0,"robber", "operate_end", {operate_back['open_id']:operate_player.to_dict()}))
+        operate_player = room.players[operate_back['openid']]
+        player.send_msg(msg.S_msg(0,"robber", "operate_end", {operate_back['openid']:operate_player.to_dict()}))
         
         # 交换身份
         player._roles.append(operate_player._roles[-1])
@@ -285,12 +292,12 @@ class robber(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
 
 # 女巫  7    
-class witch(_baseRole):
+class Witch(_baseRole):
     def __init__(self):
         super().__init__('witch',7)
 
@@ -306,12 +313,12 @@ class witch(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
 
 # 捣蛋鬼  8    
-class troublemaker(_baseRole):
+class Troublemaker(_baseRole):
     def __init__(self):
         super().__init__('troublemaker',8)
 
@@ -321,8 +328,8 @@ class troublemaker(_baseRole):
         room = player.room
         operate_back = self._game_message[0].op_content['operate_back']
         
-        player0 = room.players[operate_back['open_id'][0]]
-        player1 = room.players[operate_back['open_id'][1]]
+        player0 = room.players[operate_back['openid'][0]]
+        player1 = room.players[operate_back['openid'][1]]
         
         # 交换身份
         player0._roles.append(player1._roles[-1])
@@ -337,12 +344,12 @@ class troublemaker(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
 
 # 失眠者 9    
-class insomniac(_baseRole):
+class Insomniac(_baseRole):
     def __init__(self):
         super().__init__('insomniac',9)
     
@@ -361,12 +368,12 @@ class insomniac(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 10
+            player.send_self()
         
 
 # 酒鬼  10
-class drunk(_baseRole):
+class Drunk(_baseRole):
     def __init__(self):
         super().__init__('drunk',10)
     
@@ -375,9 +382,9 @@ class drunk(_baseRole):
             return
         room = player.room
         operate_back = self._game_message[0].op_content['operate_back']
-        role = room.left_role[int(operate_back['num'])]
+        role = room.left_role[int(operate_back['card'])]
         player._roles.append(role)
-        room.left_role[operate_back['num']] = player._roles[-2]
+        room.left_role[operate_back['card']] = player._roles[-2]
         self.status = 20
         
 
@@ -388,9 +395,26 @@ class drunk(_baseRole):
 
     def operate_begin(self, player):
         if self.status < 1:
-            player.send_self()
             self.status = 1
+            player.send_self()
         
+class Villager(_baseRole):
+    def __init__(self):
+        super().__init__('drunk',10)
+    
+    def operate_end(self, player):
+        self.status = 20
+
+    def operate_msg(self, player, rmsg):
+        if self.status < 10:
+            self._game_message.append(rmsg)
+            self.status = 10   
+
+    def operate_begin(self, player):
+        if self.status < 1:
+            self.status = 10
+            player.send_self()
+
 
 
 if __name__ == '__main__':
