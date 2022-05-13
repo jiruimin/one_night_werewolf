@@ -41,7 +41,7 @@ class Player(object):
                 loop.run_until_complete(self.websocket.send_text(json.dumps(smsg,default=lambda o: o.__dict__,ensure_ascii=False)))
             except Exception as e:
                 logging.error(e)
-        _thread.start_new_thread(send, (smsg))
+        _thread.start_new_thread(send, (smsg,))
 
     def recv_msg(self, rmsg:msg.R_msg)->msg.S_msg:
         fun = rmsg.op_type
