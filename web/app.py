@@ -96,7 +96,7 @@ async def get_user_info(openid:str):
     
 
 
-@pity.websocket("/ws/{openid}")
+@pity.websocket("/one_night_werewolf/connect/{openid}")
 async def websocket_endpoint(websocket: WebSocket, openid: str):
     await websocket.accept()
     try:
