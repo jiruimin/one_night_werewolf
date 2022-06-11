@@ -22,6 +22,8 @@ sched = BlockingScheduler()
 from one_night_werewolf.util import sqlite
 sqliteUtil = sqlite.SqliteUtil()
 # access_token = ''
+appid='wxf5015f38fc530f6e';
+secret='998bac19333056b393f3731901054c5b';
 
 player_dict = {}
 pity = FastAPI()
@@ -87,7 +89,7 @@ async def get(roomid:int):
 
 @pity.get("/one_night_werewolf/access_token")
 async def get_access_token():
-    return {"code":0,"msg":"","data":access_token}
+    return {"code":0,"msg":"","data":{"access_token":access_token,"appid":appid,"secret":secret}}
 
 @pity.get("/one_night_werewolf/user_info/{openid}")
 async def get_user_info(openid:str):
