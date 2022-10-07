@@ -54,7 +54,7 @@ class Hunter(_baseRole):
         super().__init__('hunter',-1)
 
     def operate_end(self, player):
-        if self.status == 20:
+        if self.status >= 20 or self.status < 10:
             return
         room = player.room
         openid = self._game_message[0].op_content['operate_back']['openid']
@@ -82,12 +82,12 @@ class Doppelganger(_baseRole):
 
     def to_dict(self):
         return {
-        'role_name':self._role_name,
-        'action_num':self._action_num,
-        'game_message':[p.to_dict() for p in self._game_message],
-        'status':self.status,
-        'copy_role':None if self.copy_role is None else self.copy_role.to_dict()
-    }
+            'role_name':self._role_name,
+            'action_num':self._action_num,
+            'game_message':[p.to_dict() for p in self._game_message],
+            'status':self.status,
+            'copy_role':None if self.copy_role is None else self.copy_role.to_dict()
+        }
     def operate_end(self, player):
         if self.status == 20:
             return
@@ -96,8 +96,7 @@ class Doppelganger(_baseRole):
             operate_back = self._game_message[0].op_content['operate_back']
             role_name = room.players[operate_back['openid']]._roles[-1]._role_name
             obj = sys.modules[__name__]
-            self.copy_role = getattr(obj, role_name)()
-
+            self.copy_role = getattr(obj, role_name.capitalize())()
             room.role_to_player[self.copy_role._role_name].append(player)
 
             self.copy_role.operate_begin(player)
@@ -384,7 +383,7 @@ class Drunk(_baseRole):
         operate_back = self._game_message[0].op_content['operate_back']
         role = room.left_role[int(operate_back['card'])]
         player._roles.append(role)
-        room.left_role[operate_back['card']] = player._roles[-2]
+        room.left_role[int(operate_back['card'])] = player._roles[-2]
         self.status = 20
         
 

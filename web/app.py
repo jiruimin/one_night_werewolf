@@ -1,6 +1,7 @@
 import json
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 import time
@@ -27,6 +28,17 @@ secret='998bac19333056b393f3731901054c5b';
 
 player_dict = {}
 pity = FastAPI()
+
+origins = [
+    "*"
+]
+pity.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # AppID(小程序ID)  wxf5015f38fc530f6e
 # AppSecret(小程序密钥)  998bac19333056b393f3731901054c5b
 @sched.scheduled_job('interval', minutes=90)
