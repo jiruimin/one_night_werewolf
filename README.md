@@ -1,5 +1,6 @@
 
-
+git add . && git commit -m "uuuuu" && git push origin master
+git fetch --all && git reset --hard origin/master && git pull origin master
 
 
 {"code": 0, "msg": "创建房间成功", "op_type": "info", "op_type": "info", "data": {"roomid": "24d1607d-4c6f-552b-8063-ee861f2bd8ed"}}
