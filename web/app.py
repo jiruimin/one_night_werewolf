@@ -23,8 +23,12 @@ sched = BlockingScheduler()
 from one_night_werewolf.util import sqlite
 sqliteUtil = sqlite.SqliteUtil()
 # access_token = ''
-appid='wxf5015f38fc530f6e';
-secret='998bac19333056b393f3731901054c5b';
+# appid='wxf5015f38fc530f6e';
+# secret='998bac19333056b393f3731901054c5b';
+
+# 狼人助手
+appid='wxd6bc1821cb3ee6ac';
+secret='1647232bd4ec45908f0c843985b5bd26';
 
 player_dict = {}
 pity = FastAPI()
